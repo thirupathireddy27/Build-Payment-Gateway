@@ -23,7 +23,21 @@ const options = {
 const req = http.request(options, (res) => {
     let body = '';
     res.on('data', (chunk) => body += chunk);
-    res.on('end', () => console.log(body)); // Output the JSON
+    res.on('end', () => {
+        try {
+            const responseJson = JSON.parse(body);
+            console.log(responseJson); // Output the parsed JSON
+            if (responseJson && responseJson.id) {
+                fs.writeFileSync('current_order_id.txt', responseJson.id);
+                console.log(`Order ID ${responseJson.id} written to current_order_id.txt`);
+            } else {
+                console.warn('Response body does not contain an "id" field or is not valid JSON.');
+            }
+        } catch (parseError) {
+            console.error('Failed to parse response body as JSON:', parseError);
+            console.log('Raw response body:', body); // Log raw body if parsing fails
+        }
+    });
 });
 
 req.on('error', (e) => console.error(e));
